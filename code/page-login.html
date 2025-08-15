@@ -1,0 +1,38 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Login</title>
+<link rel="stylesheet" type="text/css" href="styles/bootstrap.css">
+<link rel="stylesheet" type="text/css" href="styles/style.css">
+</head>
+<body class="theme-light">
+    
+<div id="page">
+    <div class="header header-fixed header-logo-center">
+        <a href="#" class="header-title">Login</a>
+    </div>
+
+    <div class="page-content">
+        <div class="card card-style">
+            <div class="content">
+                <h3 class="text-center">Sign in with Google</h3>
+                <button id="google-login-btn" class="btn btn-m btn-full rounded-s bg-highlight font-13 font-600 mt-3">
+                    <i class="fab fa-google me-2"></i> Continue with Google
+                </button>
+                <p id="error-message" class="text-center text-danger mt-2"></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+    import { signInWithGoogle } from "./scripts/firebase.js";
+    document.getElementById("google-login-btn").addEventListener("click", () => {
+        signInWithGoogle();
+    });
+</script>
+
+</body>
+</html>

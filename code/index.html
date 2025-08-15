@@ -1,0 +1,196 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, viewport-fit=cover" />
+<title>OnlyDance</title>
+<link rel="stylesheet" type="text/css" href="styles/bootstrap.css">
+<link rel="stylesheet" type="text/css" href="styles/style.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" type="text/css" href="fonts/css/fontawesome-all.min.css">
+<link rel="manifest" href="_manifest.json">
+<link rel="apple-touch-icon" sizes="180x180" href="app/icons/icon-192x192.png">
+</head>
+
+<body class="theme-light" data-highlight="highlight-red">
+
+<div id="preloader"><div class="spinner-border color-highlight" role="status"></div></div>
+
+<div id="page">
+
+    <div class="header header-auto-show header-fixed header-logo-center">
+        <a href="index.html" class="header-title">
+            <img src="images/OnlyDanceLogo.png" alt="OnlyDance Logo" style="max-height: 50px;">
+            OnlyDance
+        </a>        
+        <a href="#" data-menu="menu-main" class="header-icon header-icon-1"><i class="fas fa-bars"></i></a>
+        <a href="#" data-toggle-theme class="header-icon header-icon-4 show-on-theme-dark"><i class="fas fa-sun"></i></a>
+        <a href="#" data-toggle-theme class="header-icon header-icon-4 show-on-theme-light"><i class="fas fa-moon"></i></a>
+        <!-- <a href="#" data-menu="menu-share" class="header-icon header-icon-3"><i class="fas fa-share-alt"></i></a> -->
+    </div>
+
+    <div id="footer-bar" class="footer-bar-6">
+        <a href="index.html" class="circle-nav active-nav"><i class="fa fa-home"></i><span></span></a>
+    </div>
+
+    <div class="page-title page-title-fixed">
+        <h1>OnlyDance            <img src="images/OnlyDanceLogo.png" alt="OnlyDance Logo" style="max-height: 50px;">
+        </h1>
+        <!-- <a href="#" class="page-title-icon shadow-xl bg-theme color-theme" data-menu="menu-share"><i class="fa fa-share-alt"></i></a> -->
+        <a href="#" class="page-title-icon shadow-xl bg-theme color-theme show-on-theme-light" data-toggle-theme><i class="fa fa-moon"></i></a>
+        <a href="#" class="page-title-icon shadow-xl bg-theme color-theme show-on-theme-dark" data-toggle-theme><i class="fa fa-lightbulb color-yellow-dark"></i></a>
+        <a href="#" class="page-title-icon shadow-xl bg-theme color-theme" data-menu="menu-main"><i class="fa fa-bars"></i></a>
+    </div>
+    <div class="page-title-clear"></div>
+
+    <div id="menu-main" class="menu menu-box-left rounded-0" data-menu-width="280" data-menu-active="nav-welcome" data-menu-load="menu-main.html"></div>
+
+    <div class="page-content">
+        <div id="video-carousels">
+            <!-- Multiple Carousels will be dynamically added here -->
+        </div>
+
+        <script type="module">
+            import { db } from './scripts/firebase.js';
+            import { collection, getDocs } from 'https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js';
+
+            document.addEventListener("DOMContentLoaded", async function () {
+                const carouselsContainer = document.getElementById("video-carousels");
+
+                try {
+const videosCollection = collection(db, "videos");
+const videosSnapshot = await getDocs(videosCollection);
+
+// Get unique videos based on YouTube ID
+const seenIDs = new Set();
+const videoList = videosSnapshot.docs
+    .map(doc => doc.data())
+    .filter(video => {
+        const videoID = extractYouTubeID(video.youtubeURL);
+        if (!videoID || seenIDs.has(videoID)) return false;
+        seenIDs.add(videoID);
+        return true;
+    });
+
+if (videoList.length === 0) {
+    carouselsContainer.innerHTML = "<p>No videos found.</p>";
+    return;
+}
+
+
+                    // Split videos into groups of 6 per carousel
+                    const chunkSize = 6;
+                    const videoChunks = [];
+                    for (let i = 0; i < videoList.length; i += chunkSize) {
+                        videoChunks.push(videoList.slice(i, i + chunkSize));
+                    }
+
+                    // Loop through chunks and create multiple carousels
+                    videoChunks.forEach((chunk, index) => {
+                        const carouselId = `video-carousel-${index}`;
+                        const sliderId = `video-slider-${index}`;
+
+                        const carouselHTML = `
+                            <h2 class="carousel-title">
+                                <!-- Category ${index + 1} -->
+                                Newest Videos
+                            </h2>
+                            <div class="splide double-slider visible-slider slider-no-dots" id="${carouselId}">
+                                <div class="splide__track">
+                                    <div class="splide__list" id="${sliderId}">
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+
+                        carouselsContainer.innerHTML += carouselHTML;
+
+                        const videoSlider = document.getElementById(sliderId);
+                        chunk.forEach((video) => {
+                            const videoID = extractYouTubeID(video.youtubeURL);
+                            const videoSlide = document.createElement("div");
+                            videoSlide.classList.add("splide__slide", "ps-3");
+
+                            videoSlide.innerHTML = `
+                                <div data-card-height="220" class="card shadow-xl rounded-m">
+                                    <div class="video-container">
+                                        <img src="https://img.youtube.com/vi/${videoID}/maxresdefault.jpg" 
+                                            alt="Video Thumbnail" class="video-thumbnail">
+                                        <div class="play-button"><i class="fa fa-play"></i></div>
+                                    </div>
+                                    <!-- <div class="card-bottom text-center">
+                                        <h4 class="color-white font-800 mb-3">${video.description || "Dance Video"}</h4>
+                                    </div> -->
+                                    <div class="card-overlay bg-gradient"></div>
+                                </div>
+                            `;
+
+                            // Attach event listener to expand video
+                            const videoContainer = videoSlide.querySelector(".video-container");
+                            videoContainer.addEventListener("click", function () {
+                                loadVideo(videoContainer, videoID);
+                            });
+
+                            videoSlider.appendChild(videoSlide);
+                        });
+
+                        // Initialize Splide.js carousel
+                        new Splide(`#${carouselId}`, {
+                            type: "loop",
+                            perPage: 2,
+                            autoplay: true,
+                            gap: "1rem",
+                            pagination: false,
+                        }).mount();
+                    });
+
+                } catch (error) {
+                    console.error("Error fetching videos:", error);
+                }
+            });
+
+            // Extracts YouTube video ID from URL
+            function extractYouTubeID(url) {
+                const regExp = /^.*((youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=))([^#\&\?]*).*/;
+                const match = url.match(regExp);
+                return match && match[3] ? match[3] : null;
+            }
+
+            // Expands video to full screen when clicked
+            function loadVideo(container, videoID) {
+                console.log("Expanding Video:", videoID);
+
+                // Create a full-screen video wrapper
+                const videoWrapper = document.createElement("div");
+                videoWrapper.classList.add("fullscreen-video");
+
+                // Insert the YouTube iframe
+                videoWrapper.innerHTML = `
+                    <iframe width="100%" height="100%"
+                        src="https://www.youtube.com/embed/${videoID}?autoplay=1"
+                        frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media;
+                        gyroscope; picture-in-picture" allowfullscreen>
+                    </iframe>
+                    <button class="close-video">&times;</button>
+                `;
+
+                // Append the video wrapper to the body
+                document.body.appendChild(videoWrapper);
+
+                // Close button event listener
+                videoWrapper.querySelector(".close-video").addEventListener("click", () => {
+                    videoWrapper.remove();
+                });
+            }
+        </script>
+    </div>
+
+</div>
+
+<script type="text/javascript" src="scripts/bootstrap.min.js"></script>
+<script type="text/javascript" src="scripts/custom.js"></script>
+
+</body>
+</html>
